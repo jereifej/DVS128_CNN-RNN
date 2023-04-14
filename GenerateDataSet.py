@@ -57,7 +57,7 @@ def ProcessVideo(filename, target):
 #     source = source_directory + "/" + filename
 #     target = target_directory + "/" + filename
 #     ProcessVideo(filename=source, target=target)
-ProcessVideo(filename="dataset/input/thumbsdown/down4.mp4", target="dataset/thumbsdown/video/down4.mp4")
+ProcessVideo(filename="downTEST.mp4", target="downout.mp4")
 
 
 
