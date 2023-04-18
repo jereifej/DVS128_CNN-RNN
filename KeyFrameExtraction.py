@@ -12,7 +12,7 @@ def KeyFrameExtraction(source, target, target_filename):
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     threshold_min = 6000
-    threshold_max = 12000
+    threshold_max = 14000
     framecount = 0
     while cap.isOpened():
         _, fc = cap.read()
@@ -38,15 +38,12 @@ def KeyFrameExtraction(source, target, target_filename):
     cv2.destroyAllWindows()
 
 
-source_directory = "dataset/thumbsdown/train/"
-target_directory = "dataset/thumbsdown/KeyFrames"
+source_directory = "dataset/wave/video/"
+target_directory = "dataset/wave/KeyFrames"
 
-# file_count = 1
-# for filename in os.listdir(source_directory):
-#     print(filename)
-#     source_file = source_directory + "/" + filename
-#     KeyFrameExtraction(source=source_file, target=target_directory, target_filename="wave"+str(file_count))
-#     file_count = file_count + 1
-
-KeyFrameExtraction(source="dataset/thumbsdown/video/down4.mp4",
-                   target=target_directory, target_filename="down4")
+file_count = 1
+for filename in os.listdir(source_directory):
+    print(filename)
+    source_file = source_directory + "/" + filename
+    KeyFrameExtraction(source=source_file, target=target_directory, target_filename="wave"+str(file_count))
+    file_count = file_count + 1

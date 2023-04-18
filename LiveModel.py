@@ -2,7 +2,59 @@ import cv2
 import numpy as np
 import keras.models
 import time
+from threading import Thread
 from skimage.util import random_noise
+
+# Using https://github.com/PyImageSearch/imutils/tree/master/imutils/video
+# defining a helper class for implementing multi-threading
+class WebcamStream:
+    # initialization method
+    def __init__(self, stream_id=0):
+        self.stream_id = stream_id  # default is 0 for main camera
+
+        # opening video capture stream
+        self.vcap = cv2.VideoCapture(self.stream_id)
+        if self.vcap.isOpened() is False:
+            print("[Exiting]: Error accessing webcam stream.")
+            exit(0)
+        fps_input_stream = int(self.vcap.get(5))  # hardware fps
+        print("FPS of input stream: {}".format(fps_input_stream))
+
+        # reading a single frame from vcap stream for initializing
+        self.grabbed, self.frame = self.vcap.read()
+        if self.grabbed is False:
+            print('[Exiting] No more frames to read')
+            exit(0)
+        # self.stopped is initialized to False
+        self.stopped = True
+        # thread instantiation
+        self.t = Thread(target=self.update, args=())
+        self.t.daemon = True  # daemon threads run in background
+
+    # method to start thread
+    def start(self):
+        self.stopped = False
+        self.t.start()
+
+    # method passed to thread to read next available frame
+    def update(self):
+        while True:
+            if self.stopped is True:
+                break
+            self.grabbed, self.frame = self.vcap.read()
+            if self.grabbed is False:
+                print('[Exiting] No more frames to read')
+                self.stopped = True
+                break
+        self.vcap.release()
+
+    # method to return latest read frame
+    def read(self):
+        return self.frame
+
+    # method to stop reading frames
+    def stop(self):
+        self.stopped = True
 
 
 def threshold(frame):
@@ -12,25 +64,22 @@ def threshold(frame):
     return out
 
 
-# set up model and OpenCV video capture settings
 model = keras.models.load_model("CNN_model")
-cap = cv2.VideoCapture(1, cv2.CAP_MSMF)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-# cap.set(cv2.CAP_PROP_FPS, int(30))
+webcam_stream = WebcamStream(stream_id=1)
+webcam_stream.start()
 
-
-# initialize current and previous frame
-_, fc = cap.read()
+fc = webcam_stream.read()
 fc = cv2.cvtColor(fc, cv2.COLOR_BGR2GRAY)
 fp = np.array(fc, dtype=int)
-print(np.shape(fc))
-while cap.isOpened():
-    _, fc = cap.read()
-    if type(fc) is not np.ndarray:
+
+num_frames_processed = 0
+start = time.time()
+while True:
+    if webcam_stream.stopped is True :
         break
-    start = time.time()
-    # do the DVS camera emulation thing
+    else:
+        fc = webcam_stream.read()
+
     fc = cv2.cvtColor(fc, cv2.COLOR_BGR2GRAY)  # convert to grayscale
     fc = cv2.GaussianBlur(fc, (9, 9), 20)  # blur bc my webcam is *fart noises*
     fc = np.array(fc, dtype=int)
@@ -63,9 +112,16 @@ while cap.isOpened():
     cv2.imshow('output', ft)
     fp = fc
 
-    print(str((time.time()-start)*1E3) + " ms")
-    if cv2.waitKey(25) & 0xFF == ord('q'):
+    num_frames_processed += 1
+    key = cv2.waitKey(1)
+    if key == ord('q'):
         break
+end = time.time()
+webcam_stream.stop() # stop the webcam stream
 
-cap.release()
+# printing time elapsed and fps
+elapsed = end-start
+fps = num_frames_processed/elapsed
+print("FPS: {} , Elapsed Time: {} ".format(fps, elapsed))
+# closing all windows
 cv2.destroyAllWindows()
