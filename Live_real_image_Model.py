@@ -5,9 +5,6 @@ import time
 from threading import Thread
 from skimage.util import random_noise
 
-threshold_min = 6000
-threshold_max = 14000
-
 # Using https://github.com/PyImageSearch/imutils/tree/master/imutils/video
 # defining a helper class for implementing multi-threading
 class WebcamStream:
@@ -72,26 +69,18 @@ webcam_stream = WebcamStream(stream_id=1)
 webcam_stream.start()
 
 fc = webcam_stream.read()
-fc = cv2.cvtColor(fc, cv2.COLOR_BGR2GRAY)
-fp = np.array(fc, dtype=int)
 
 num_frames_processed = 0
 start = time.time()
 while True:
-    if webcam_stream.stopped is True :
+    if webcam_stream.stopped is True:
         break
     else:
         fc = webcam_stream.read()
     t0 = time.time()
     fc = cv2.cvtColor(fc, cv2.COLOR_BGR2GRAY)  # convert to grayscale
-    fc = cv2.GaussianBlur(fc, (9, 9), 20)  # blur bc my webcam is *fart noises*
-    fc = np.array(fc, dtype=int)
-    diff = fc - fp
-    ft = np.array(threshold(diff), dtype=np.uint8)  # subtract current and previous frame, then threshold
-
-    im_in = ft
     # Setting image to the input size
-    im_in = cv2.resize(ft,
+    im_in = cv2.resize(fc,
                        (0, 0),
                        fx=.15,
                        fy=.15,
@@ -112,10 +101,9 @@ while True:
             text = "thumbs up"
         elif decision == 2:
             text = "wave"
-    cv2.putText(ft, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+    cv2.putText(fc, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
     print((time.time()-t0)*1E3)
-    cv2.imshow('output', ft)
-    fp = fc
+    cv2.imshow('output', fc)
 
     num_frames_processed += 1
     key = cv2.waitKey(1)
