@@ -8,6 +8,7 @@ from skimage.util import random_noise
 threshold_min = 6000
 threshold_max = 14000
 
+
 # Using https://github.com/PyImageSearch/imutils/tree/master/imutils/video
 # defining a helper class for implementing multi-threading
 class WebcamStream:
